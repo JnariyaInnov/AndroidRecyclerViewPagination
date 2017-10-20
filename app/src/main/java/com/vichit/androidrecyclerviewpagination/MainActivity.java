@@ -1,6 +1,7 @@
 package com.vichit.androidrecyclerviewpagination;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -35,20 +36,12 @@ public class MainActivity extends AppCompatActivity implements LoadMoreItem {
 
     }
 
-
-//    @Subscribe(threadMode = ThreadMode.MAIN)
-//    public void onRecyclerArticleLoadMore(ArticleLoadMoreEvent event) {
-//        Log.e("ppppp ArticleLoadMore", "onRecyclerArticleLoadMore");
-//        Toast.makeText(MainActivity.this, "onRecyclerArticleLoadMore", Toast.LENGTH_LONG).show();
-//    }
-
-
     @Override
     public void onRecyclerArticleLoadMore() {
         if (page == totalPage) {
             return;
         }
-
+        adapter.addProgressBar();
         loadArticleByPagination(page++);
         Log.e("ppppp page count", page + "");
         Toast.makeText(MainActivity.this, "onRecyclerArticleLoadMore", Toast.LENGTH_LONG).show();
@@ -65,12 +58,19 @@ public class MainActivity extends AppCompatActivity implements LoadMoreItem {
         Call<ArticleResponse> call = articleService.findAllByPagination(page);
         call.enqueue(new Callback<ArticleResponse>() {
             @Override
-            public void onResponse(Call<ArticleResponse> call, Response<ArticleResponse> response) {
+            public void onResponse(Call<ArticleResponse> call, final Response<ArticleResponse> response) {
                 totalPage = response.body().getData().getLastPage();
-                articleList = response.body().getData().getArticlelist();
-
-                adapter.addMoreItems(articleList);
-                adapter.onLoaded();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (adapter.isLoading()) {
+                            adapter.removeProgressBar();
+                        }
+                        articleList = response.body().getData().getArticlelist();
+                        adapter.addMoreItems(articleList);
+                        adapter.onLoaded();
+                    }
+                }, 3000);
 
 
             }

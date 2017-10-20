@@ -1,19 +1,18 @@
 package com.vichit.androidrecyclerviewpagination;
 
-import android.content.Context;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
-public class AdapterArticle extends RecyclerView.Adapter<AdapterArticle.MyViewHolder> {
-    private Context context;
+public class AdapterArticle extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private List<ArticleResponse.Articlelist> articleList;
     private static final int VIEW_ITEM = 1;
     private static final int VIEW_PROG = 0;
@@ -46,104 +45,96 @@ public class AdapterArticle extends RecyclerView.Adapter<AdapterArticle.MyViewHo
                 }
             });
         }
-
     }
 
     public void onLoaded() {
         loading = false;
     }
 
-    //if loading
-//    public boolean isLoading() {
-//        return loading;
-//    }
-
-    public void addMoreItems(List<ArticleResponse.Articlelist> articleList) {
-        this.articleList.addAll(articleList);
-        notifyDataSetChanged();
+    public boolean isLoading() {
+        return loading;
     }
-
-//    public void clearList() {
-//        this.articleList.clear();
-//    }
-    
-//    public ArticleResponse.Articlelist getArticle(int pos) {
-//        return this.articleList.get(pos);
-//    }
-
-//    public void addProgressBar() {
-//        articleList.add(null);
-//        notifyItemInserted(articleList.size() - 1);
-//    }
-//
-//    public void removeProgressBar() {
-//        articleList.remove(articleList.size() - 1);
-//        notifyItemRemoved(articleList.size() - 1);
-//    }
-//
-//    public int size() {
-//        return this.articleList.size();
-//    }
 
     public void onLoadMoreEvent(LoadMoreItem loadMoreItem) {
         this.loadMoreItem = loadMoreItem;
     }
 
     @Override
-    public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.custom_article_layout, parent, false);
-        return new MyViewHolder(view);
+    public int getItemViewType(int position) {
+        return (articleList.get(position) != null) ? VIEW_ITEM : VIEW_PROG;
+    }
+
+
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+
+        RecyclerView.ViewHolder vh = null;
+
+        if (viewType == VIEW_ITEM) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.custom_article_layout, parent, false);
+            vh = new MyViewHolder(view);
+        } else if (viewType == VIEW_PROG) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_custom_progressbar, parent, false);
+            vh = new ProgressBarViewHolder(view);
+        }
+        return vh;
 
     }
 
     @Override
-    public void onBindViewHolder(MyViewHolder holder, int position) {
-        holder.title.setText(articleList.get(position).getTitle());
-        holder.description.setText(articleList.get(position).getContent());
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
 
+        if (holder instanceof MyViewHolder) {
+            MyViewHolder articleViewHolder = (MyViewHolder) holder;
+            articleViewHolder.title.setText(articleList.get(position).getTitle());
+            articleViewHolder.description.setText(articleList.get(position).getContent());
+
+        } else if (holder instanceof ProgressBarViewHolder) {
+            ProgressBarViewHolder progressBarViewHolder = (ProgressBarViewHolder) holder;
+            progressBarViewHolder.progressBar.setIndeterminate(true);
+        }
     }
 
-
-//    @Override
-//    public int getItemViewType(int position) {
-//        return (articleList.get(position) != null) ? VIEW_ITEM : VIEW_PROG;
-//    }
-
-
-//    @Override
-//    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-//
-//        RecyclerView.ViewHolder vh = null;
-//
-//        if (viewType == VIEW_ITEM) {
-//            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.custom_article_layout, parent, false);
-//            vh = new MyViewHolder(view);
-//        } else if (viewType == VIEW_PROG) {
-//            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_custom_progressbar, parent, false);
-//            vh = new ProgressBarViewHolder(view);
-//        }
-//        return vh;
-//
-//    }
-
-//    @Override
-//    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-//
-//        if (holder instanceof MyViewHolder) {
-//            MyViewHolder articleViewHolder = (MyViewHolder) holder;
-//            articleViewHolder.title.setText(articleList.get(position).getTitle());
-//            articleViewHolder.description.setText(articleList.get(position).getContent());
-//
-//        } else if (holder instanceof ProgressBarViewHolder) {
-//            ProgressBarViewHolder progressBarViewHolder = (ProgressBarViewHolder) holder;
-//            progressBarViewHolder.progressBar.setIndeterminate(true);
-//        }
-//    }
+    public void addMoreItems(List<ArticleResponse.Articlelist> articleList) {
+        this.articleList.addAll(articleList);
+        notifyDataSetChanged();
+    }
 
     @Override
     public int getItemCount() {
         return articleList.size();
     }
+
+    /*
+        when recyclerview stay at down, arrayList will add null to last index of arrayList.
+        when arrayList add null to last index of arrayList, ViewType is check: if the last index of
+        arrayList null, progressBar will show but if the last index of arrayList had values, it will
+        show item simple.
+     */
+    public void addProgressBar() {
+        articleList.add(null);
+        notifyItemInserted(articleList.size() - 1);
+    }
+
+    //after progressBar show, it will remove progressBar
+    public void removeProgressBar() {
+        articleList.remove(articleList.size() - 1);
+        notifyItemRemoved(articleList.size() - 1);
+    }
+
+    //    @Override
+//    public MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+//        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.custom_article_layout, parent, false);
+//        return new MyViewHolder(view);
+//
+//    }
+
+//    @Override
+//    public void onBindViewHolder(MyViewHolder holder, int position) {
+//        holder.title.setText(articleList.get(position).getTitle());
+//        holder.description.setText(articleList.get(position).getContent());
+//
+//    }
 
 
     class MyViewHolder extends RecyclerView.ViewHolder {
@@ -156,16 +147,16 @@ public class AdapterArticle extends RecyclerView.Adapter<AdapterArticle.MyViewHo
 
         }
     }
-//
-//    class ProgressBarViewHolder extends RecyclerView.ViewHolder {
-//        ProgressBar progressBar;
-//
-//        public ProgressBarViewHolder(View itemView) {
-//            super(itemView);
-//            progressBar = itemView.findViewById(R.id.progressBar);
-//        }
-//
-//    }
+
+    class ProgressBarViewHolder extends RecyclerView.ViewHolder {
+        ProgressBar progressBar;
+
+        public ProgressBarViewHolder(View itemView) {
+            super(itemView);
+            progressBar = itemView.findViewById(R.id.progressBar);
+        }
+
+    }
 
 }
 
