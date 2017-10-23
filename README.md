@@ -135,6 +135,147 @@ class MyViewHolder extends RecyclerView.ViewHolder {
          }
 }         
 ```
+### MainActivity
+Before set up pagination. You must know How many page that you have in API. So If you don't know total page, You cannot handle your scroll page. It's mean that when you scroll to down of item in RecyclerView, It's will load more item. 
+```java
+private void loadArticleByPagination(int page) {
+            Call<ArticleResponse> call = articleService.findAllByPagination(page);
+            call.enqueue(new Callback<ArticleResponse>() {
+             @Override
+             public void onResponse(Call<ArticleResponse> call, Response<ArticleResponse> response) {
+                 totalPage = response.body().getData().getLastPage();
+                 articleList = response.body().getData().getArticlelist();
+ 
+                 adapter.addMoreItems(articleList);
+                 adapter.onLoaded();
+             }
+ 
+             @Override
+             public void onFailure(Call<ArticleResponse> call, Throwable t) {
+                 t.printStackTrace();
+             }
+         });
+     }
+```
+For get Total page 
+```java
+totalPage = response.body().getData().getLastPage();
+```
+
+#### Implement Interface to get reference from Adapter
+When you srcoll RecyclerView to down of item list, this method will invoke from adapter.
+```java
+@Override
+public void onRecyclerArticleLoadMore() {
+     if (page == totalPage) {
+          return;
+     }
+     loadArticleByPagination(page++);
+     Log.e("ppppp page count", page + "");
+     Toast.makeText(MainActivity.this, "onRecyclerArticleLoadMore", Toast.LENGTH_LONG).show();
+}
+```
+#### SetUp RecyclerView
+```java
+private void setRecyclerView() {
+     recyclerView = (RecyclerView) findViewById(R.id.recycler_article);
+     recyclerView.setLayoutManager(new LinearLayoutManager(this));
+     adapter = new AdapterArticle(recyclerView);
+     recyclerView.setAdapter(adapter);
+}
+```
+
+#### Full Code 
+```Java
+public class MainActivity extends AppCompatActivity implements LoadMoreItem {
+      RecyclerView recyclerView;
+      AdapterArticle adapter;
+      List<ArticleResponse.Articlelist> articleList;
+      ArticleService articleService;
+      private static final int ITEMS_PER_PAGE = 15;
+      private int totalPage;
+      private int page = 1;
+  
+      @Override
+      protected void onCreate(Bundle savedInstanceState) {
+          super.onCreate(savedInstanceState);
+          setContentView(R.layout.activity_main);
+  
+          articleService = ServiceGenerator.createService(ArticleService.class);
+          setRecyclerView();
+          adapter.onLoadMoreEvent(this);
+  
+          loadArticleByPagination(page);
+  
+      }
+      
+      @Override
+      public void onRecyclerArticleLoadMore() {
+          if (page == totalPage) {
+              return;
+          }
+         loadArticleByPagination(page++);
+          Log.e("ppppp page count", page + "");
+          Toast.makeText(MainActivity.this, "onRecyclerArticleLoadMore", Toast.LENGTH_LONG).show();
+      }
+  
+      private void setRecyclerView() {
+          recyclerView = (RecyclerView) findViewById(R.id.recycler_article);
+          recyclerView.setLayoutManager(new LinearLayoutManager(this));
+          adapter = new AdapterArticle(recyclerView);
+          recyclerView.setAdapter(adapter);
+      }
+  
+      private void loadArticleByPagination(int page) {
+          Call<ArticleResponse> call = articleService.findAllByPagination(page);
+         call.enqueue(new Callback<ArticleResponse>() {
+              @Override
+              public void onResponse(Call<ArticleResponse> call, Response<ArticleResponse> response) {
+                  totalPage = response.body().getData().getLastPage();
+                  articleList = response.body().getData().getArticlelist();
+  
+                  adapter.addMoreItems(articleList);
+                  adapter.onLoaded();
+              }
+  
+              @Override
+              public void onFailure(Call<ArticleResponse> call, Throwable t) {
+                  t.printStackTrace();
+              }
+          });
+     } 
+ }
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
